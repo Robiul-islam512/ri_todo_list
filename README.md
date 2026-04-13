@@ -94,7 +94,6 @@ You can type the number **or** the option name (e.g. `create task`). Type `back`
 
 ## Known Limitations / Work in Progress
 
-- Delete Task and Complete Task options are not yet fully implemented.
 - Task description and priority updates are stubbed out.
 - No multi-user support — one registered user per installation.
 - Data is stored in plain JSON files with no encryption (except the hashed password).
