@@ -176,7 +176,7 @@ fn main() {
                                 std::process::exit(0);
                             }
                             TaskOperations::CompleteTask => {
-                                println!("You have chosen to complete a task.");
+                                complete_task(&mut tasks);
                             }
                         }
                     }
@@ -190,6 +190,34 @@ fn main() {
             };
         }
     };
+}
+
+fn complete_task(tasks:&mut Vec<Task>){
+    let todays_tasks = Local::now().format("%Y-%m-%d").to_string();
+    let mut completed_task = String::new();
+
+    println!("Enter the task name you have completed or back to home page 'back': ");
+    io::stdin().read_line(&mut completed_task).expect("unable to read the complete task.Try again.");
+
+    let completed_task = completed_task.trim().to_lowercase();
+
+    if completed_task == "back"{
+        home_page();
+        return;
+    }
+
+    // println!("{}",completed_task);
+    if let Some(task) =  tasks.iter_mut().find(|task| task.created_at[0..10] == todays_tasks && task.task_name == completed_task){
+        task.task_status = TaskStatus::Completed;
+    }
+    else{
+        println!("There no such task you have added.Please check and try again.")
+    }
+
+    println!("Task '{}' marked as completed.",completed_task);
+    let user_task = serde_json::to_string_pretty(&tasks).expect("unable to stringify the tasks value");
+    fs::write("tasks.json", user_task).expect("unable to write to file");
+
 }
 
 fn delete_task(tasks: &mut Vec<Task>){
