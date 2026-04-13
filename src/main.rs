@@ -167,7 +167,6 @@ fn main() {
                             }
                             TaskOperations::DeleteTask => {
                                 delete_task(&mut tasks);
-                                println!("You have chosen to delete a task.");
                             }
                             TaskOperations::ViewTasks => {
                                 tasks_view(&tasks);
@@ -193,8 +192,39 @@ fn main() {
     };
 }
 
-fn delete_task(tasks: &[Task]){
-    
+fn delete_task(tasks: &mut Vec<Task>){
+    let todays_date = Local::now().format("%Y-%m-%d").to_string();
+    let mut task_name = String::new();
+
+    println!("Enter task name you want to delete or back to home page 'back': ");
+    io::stdin().read_line(&mut task_name).expect("unable to read task name you want to delete.Try again.");
+
+    let task_name = task_name.trim().to_lowercase();
+
+    if task_name == "back" {
+        home_page();
+        return;
+    }
+
+    let position =  tasks.iter().position(|task|{
+        task.created_at[0..10] == todays_date && task.task_name == task_name
+    });
+
+
+    match position {
+        Some(position) => {
+            tasks.remove(position);
+            println!("Task '{}' deleted successfully",task_name);
+            let user_taks = serde_json::to_string_pretty(&tasks).expect("unable to stringify the tasks");
+            fs::write("tasks.json", user_taks)
+                                    .expect("unable to write to file");
+        },
+        None => {
+            println!("There is no such task name found for today.Please check and try again.");
+            return;
+        },
+    };
+
 }
 
 fn print_tasks(tasks: &Vec<&Task>) {
