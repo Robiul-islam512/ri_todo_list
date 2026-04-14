@@ -186,7 +186,7 @@ fn main() {
 }
 
 fn complete_task(tasks:&mut Vec<Task>){
-    let todays_tasks = Local::now().format("%Y-%m-%d").to_string();
+      let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     let mut completed_task = String::new();
 
     println!("Enter the task name you have completed or back to home page 'back': ");
@@ -199,15 +199,15 @@ fn complete_task(tasks:&mut Vec<Task>){
         return;
     }
 
-    if let Some(task) =  tasks.iter_mut().find(|task| task.created_at[0..10] == todays_tasks && task.task_name == completed_task){
+    if let Some(task) =  tasks.iter_mut().find(|task| task.created_at[0..10] == todays_date[0..10] && task.task_name == completed_task){
         task.task_status = TaskStatus::Completed;
+
+        println!("Task '{}' marked as completed.",completed_task);
+        tasks_stringify_and_tasks_to_json(tasks);
     }
     else{
         println!("There no such task you have added.Please check and try again.")
-    }
-
-    println!("Task '{}' marked as completed.",completed_task);
-    tasks_stringify_and_tasks_to_json(tasks);
+    }    
 
 }
 
@@ -399,7 +399,7 @@ fn tasks_view(tasks: &[Task]) {
                 .expect("unable to read year");
 
             let date = format!(
-                "{:0>2}-{:0>2}-{}",
+                "{}-{:0>2}-{:0>2}",
                 tasks_year.trim(),
                 tasks_month.trim(),
                 tasks_date.trim(),
