@@ -72,7 +72,6 @@ fn main() {
         Registration_Or_Login::Register => {
             let mut username = String::new();
             let mut email = String::new();
-            // let mut password  = String::new();
             println!("User Name: ");
             io::stdin().read_line(&mut username).unwrap();
             println!("Email: ");
@@ -105,14 +104,12 @@ fn main() {
                 serde_json::from_str(&content).expect("unable to objectify");
 
             let mut username_or_email = String::new();
-            // let mut password = String::new();
 
             println!("Username or Email: ");
             io::stdin().read_line(&mut username_or_email).unwrap();
 
             println!("Password: ");
             let password = read_password().unwrap();
-            // io::stdin().read_line(&mut password).unwrap();
 
             let mut hasher = Sha256::new();
             hasher.update(password.trim());
@@ -156,14 +153,10 @@ fn main() {
                                     }
                                 };
                                 tasks.push(task);
-                                let user_tasks = serde_json::to_string_pretty(&mut tasks)
-                                    .expect("unable to stringify");
-                                fs::write("tasks.json", user_tasks)
-                                    .expect("unable to write to file");
+                                tasks_stringify_and_tasks_to_json(&tasks);
                             }
                             TaskOperations::UpdateTask => {
                                 update_task(&mut tasks);
-                                println!("You have chosen to update a task.");
                             }
                             TaskOperations::DeleteTask => {
                                 delete_task(&mut tasks);
@@ -206,7 +199,6 @@ fn complete_task(tasks:&mut Vec<Task>){
         return;
     }
 
-    // println!("{}",completed_task);
     if let Some(task) =  tasks.iter_mut().find(|task| task.created_at[0..10] == todays_tasks && task.task_name == completed_task){
         task.task_status = TaskStatus::Completed;
     }
@@ -215,13 +207,12 @@ fn complete_task(tasks:&mut Vec<Task>){
     }
 
     println!("Task '{}' marked as completed.",completed_task);
-    let user_task = serde_json::to_string_pretty(&tasks).expect("unable to stringify the tasks value");
-    fs::write("tasks.json", user_task).expect("unable to write to file");
+    tasks_stringify_and_tasks_to_json(tasks);
 
 }
 
 fn delete_task(tasks: &mut Vec<Task>){
-    let todays_date = Local::now().format("%Y-%m-%d").to_string();
+    let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
     let mut task_name = String::new();
 
     println!("Enter task name you want to delete or back to home page 'back': ");
@@ -235,7 +226,7 @@ fn delete_task(tasks: &mut Vec<Task>){
     }
 
     let position =  tasks.iter().position(|task|{
-        task.created_at[0..10] == todays_date && task.task_name == task_name
+        task.created_at[0..10] == todays_date[0..10] && task.task_name == task_name
     });
 
 
@@ -243,9 +234,7 @@ fn delete_task(tasks: &mut Vec<Task>){
         Some(position) => {
             tasks.remove(position);
             println!("Task '{}' deleted successfully",task_name);
-            let user_taks = serde_json::to_string_pretty(&tasks).expect("unable to stringify the tasks");
-            fs::write("tasks.json", user_taks)
-                                    .expect("unable to write to file");
+            tasks_stringify_and_tasks_to_json(tasks);
         },
         None => {
             println!("There is no such task name found for today.Please check and try again.");
@@ -267,11 +256,11 @@ fn print_tasks(tasks: &Vec<&Task>) {
 }
 
 fn tasks_priority(tasks: &[Task], priority: PriorityLevel) -> Vec<&Task> {
-    let todays_date = Local::now().format("%Y-%m-%d").to_string();
+    let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
     let priority_tasks: Vec<&Task> = tasks
         .iter()
-        .filter(|task| (task.created_at[0..10] == todays_date) && (task.priority_level == priority))
+        .filter(|task| (task.created_at[0..10] == todays_date[0..10]) && (task.priority_level == priority))
         .collect();
 
     priority_tasks
@@ -308,11 +297,11 @@ fn tasks_view(tasks: &[Task]) {
 
     match views_choice {
         TaskViews::TodaysAllTasks => {
-            let todays_date = Local::now().format("%Y-%m-%d").to_string();
+            let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
             let todays_tasks: Vec<&Task> = tasks
                 .iter()
-                .filter(|task| task.created_at[0..10] == todays_date)
+                .filter(|task| task.created_at[0..10] == todays_date[0..10])
                 .collect();
 
             print_tasks(&todays_tasks);
@@ -344,7 +333,7 @@ fn tasks_view(tasks: &[Task]) {
                 "somthing went wrong while taking input of priority wise tasks view.Try Again.",
             );
 
-            let todays_date = Local::now().format("%Y-%m-%d").to_string();
+            let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
             match priority_choice.trim().to_lowercase().as_str() {
                 "print all high priority tasks" | "1" => {
@@ -462,6 +451,26 @@ fn home_page() -> TaskOperations {
     task_operation_choice
 }
 
+fn set_priority(tasks: &mut Vec<Task>,new_tasks_priority:PriorityLevel,task_name:String)->&mut Vec<Task>{
+    let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    if let Some(task) = tasks.iter_mut().find(|task| task.created_at[0..10] == todays_date[0..10] && task.task_name == task_name){
+        task.priority_level = new_tasks_priority;
+        task.updated_at = todays_date;
+    }
+    else{
+        println!("There is no such task name found for today.Please check and try again.");
+        return tasks;
+    }
+
+    tasks
+
+}
+
+fn tasks_stringify_and_tasks_to_json(tasks: &Vec<Task>){
+    let user_tasks = serde_json::to_string_pretty(&tasks).expect("unable to stringify the tasks");
+    fs::write("tasks.json", user_tasks).expect("unable to write to file");
+}
+
 fn update_task(tasks: &mut Vec<Task>) {
     println!("What you want to update?");
 
@@ -475,6 +484,8 @@ fn update_task(tasks: &mut Vec<Task>) {
     io::stdin()
         .read_line(&mut choose_fields_to_update)
         .expect("unable to read choose fields");
+
+     let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
     match choose_fields_to_update.trim().to_lowercase().as_str() {
         "task name" | "1" => {
@@ -491,23 +502,96 @@ fn update_task(tasks: &mut Vec<Task>) {
                 .read_line(&mut new_task_name)
                 .expect("rewrite the new updated task name");
 
-            let now = Local::now();
+            let prev_task_name = prev_task_name.trim().to_lowercase();
+            let new_task_name = new_task_name.trim().to_lowercase();
 
             if let Some(task) = tasks
                 .iter_mut()
-                .find(|task| prev_task_name.trim().to_lowercase() == task.task_name)
+                .find(|task| prev_task_name == task.task_name && task.created_at[0..10] == todays_date[0..10])
             {
-                task.task_name = new_task_name.trim().to_lowercase();
-                task.updated_at = now.format("%Y-%m-%d %H:%M:%S").to_string();
+                task.task_name = new_task_name;
+                task.updated_at = todays_date;
             } else {
                 println!("There is no such task.");
             }
 
-            let user_tasks = serde_json::to_string(&tasks).expect("unable to stringify");
-            fs::write("tasks.json", user_tasks).expect("unable save data in tasks.json file");
+            tasks_stringify_and_tasks_to_json(tasks);
         }
-        "task description" | "2" => {}
-        "task priority" | "3" => {}
+        "task description" | "2" => {
+            let mut task_name = String::new();
+            let mut new_task_description = String::new();
+
+            println!("Enter the task name you want to update description:");
+            io::stdin()
+                .read_line(&mut task_name)
+                .expect("unable to read task name");
+
+            println!("Enter the new task description:");
+            io::stdin()
+                .read_line(&mut new_task_description)
+                .expect("rewrite the new updated task description");
+            
+            let task_name = task_name.trim().to_lowercase();
+            let new_task_description = new_task_description.trim().to_lowercase();
+
+            if let Some(task) = tasks.iter_mut().find(|task| task.created_at[0..10] == todays_date[0..10] && task.task_name == task_name ) {
+                task.task_description = new_task_description;
+                task.updated_at = todays_date;
+            }
+            else{
+                println!("No such task found for today.Please check and try again");
+            }
+
+            tasks_stringify_and_tasks_to_json(tasks);
+            
+        }
+        "task priority" | "3" => {
+            let mut task_name = String::new();
+            let mut new_priority_level = String::new();
+
+            println!("Enter the task name you want to update priority:");
+            io::stdin().read_line(&mut task_name).expect("unable to read task name");
+
+            println!("Enter the new priority level:");
+            io::stdin().read_line(&mut new_priority_level).expect("unable to read new priority level");
+
+            let task_name = task_name.trim().to_lowercase();
+            let new_priority_level = new_priority_level.trim().to_lowercase();
+
+            let priority_level = match new_priority_level.as_str() {
+                "high" => PriorityLevel::High,
+                "low" => PriorityLevel::Low,
+                "medium" => PriorityLevel::Medium,
+                _=>{
+                    println!("There is no such priority level.Try with only high,medium and low.");
+                    return;
+                }
+            };
+
+            if let Some(task) = tasks.iter().find(|task| task.created_at[0..10] == todays_date[0..10] && task.task_name == task_name && task.priority_level == priority_level){
+                println!("Same priority level you have already set for this task.");
+                return;
+            }
+            else {
+                 match priority_level {
+                    PriorityLevel::High =>{
+                        let tasks = set_priority(tasks,PriorityLevel::High,task_name);
+                        tasks_stringify_and_tasks_to_json(tasks);
+                    },
+                    PriorityLevel::Low=>{
+                        let tasks = set_priority(tasks,PriorityLevel::Low,task_name);
+                        tasks_stringify_and_tasks_to_json(tasks);
+                    },
+                    PriorityLevel::Medium=>{
+                        let tasks = set_priority(tasks,PriorityLevel::Medium,task_name);
+
+                        tasks_stringify_and_tasks_to_json(tasks);
+
+                    },
+                }            
+            }
+    
+        }
         "back" => {
             home_page();
         }

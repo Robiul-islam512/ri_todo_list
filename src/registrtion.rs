@@ -1,7 +1,3 @@
-// Registration of user information
-// 1.username
-// 2.password
-// 3.email
 use chrono::Utc;
 
 pub mod registration{
