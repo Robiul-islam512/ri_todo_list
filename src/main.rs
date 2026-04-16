@@ -1,25 +1,21 @@
 use chrono::Local;
 use rpassword::read_password;
-use serde::de;
 use sha2::{Digest, Sha256};
 use std::{
-    fmt::format,
     fs,
     io::{self},
-    task,
 };
 
 mod login;
 mod registrtion;
 mod todo;
 
-use crate::login::login::Status;
 use login::login::Loginstatus;
 use login::login::UserLogin;
 use registrtion::registration::UserRegistration;
 use todo::todo::{PriorityLevel, Task, TaskStatus};
 
-enum Registration_Or_Login {
+enum RegistrationOrLogin {
     Register,
     Login,
 }
@@ -43,13 +39,6 @@ enum TaskViews {
     BackToHomePage,
 }
 
-enum PriorityWiseTasks {
-    HighPriorityTasks,
-    MediumPriorityTasks,
-    LowPriorityTasks,
-    HighToLowPriorityTasks,
-    LowToHighPriorityTasks,
-}
 fn main() {
     let mut is_registered = false;
 
@@ -63,13 +52,13 @@ fn main() {
     }
 
     let register_or_login = match is_registered {
-        false => Registration_Or_Login::Register,
-        true => Registration_Or_Login::Login,
+        false => RegistrationOrLogin::Register,
+        true => RegistrationOrLogin::Login,
         _ => panic!("please restart the program and login or register your account"),
     };
 
     match register_or_login {
-        Registration_Or_Login::Register => {
+        RegistrationOrLogin::Register => {
             let mut username = String::new();
             let mut email = String::new();
             println!("User Name: ");
@@ -99,7 +88,7 @@ fn main() {
 
             fs::write("registration.json", json).expect("unable to store json data");
         }
-        Registration_Or_Login::Login => {
+        RegistrationOrLogin::Login => {
             let user: UserRegistration =
                 serde_json::from_str(&content).expect("unable to objectify");
 
@@ -314,9 +303,10 @@ fn tasks_view(tasks: &[Task]) {
             print_tasks(&pending_tasks);
         }
         TaskViews::TodaysCompletedTasks => {
+            let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
             let compeleted_tasks: Vec<&Task> = tasks
                 .iter()
-                .filter(|task| task.task_status == TaskStatus::Completed)
+                .filter(|task| task.created_at[0..10] == todays_date[0..10] && task.task_status == TaskStatus::Completed)
                 .collect();
             print_tasks(&compeleted_tasks);
         }
@@ -332,8 +322,6 @@ fn tasks_view(tasks: &[Task]) {
             io::stdin().read_line(&mut priority_choice).expect(
                 "somthing went wrong while taking input of priority wise tasks view.Try Again.",
             );
-
-            let todays_date = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
             match priority_choice.trim().to_lowercase().as_str() {
                 "print all high priority tasks" | "1" => {

@@ -1,7 +1,6 @@
 
 
 pub mod todo{
-    use uuid::Uuid;
     use serde::{Serialize, Deserialize};
 
     #[derive(Debug, Serialize, Deserialize,PartialEq)]
@@ -29,13 +28,13 @@ pub mod todo{
     }
 
     impl Task {
-        pub fn new(&self,_id:u32,task_name:String,priority_level: PriorityLevel,task_status: TaskStatus,task_description: String,remainder: String,created_at: String,updated_at: String) -> Self {
+        pub fn new(_id:u32,task_name:String,priority_level: PriorityLevel,task_status: TaskStatus,task_description: String,remainder: String,created_at: String,updated_at: String) -> Self {
             Task{
-                _id:self._id,
-                task_name:self.task_name.trim().to_lowercase(),
+                _id,
+                task_name: task_name.trim().to_lowercase(),
                 priority_level,
                 task_status,
-                task_description:self.task_description.trim().to_uppercase(),
+                task_description: task_description.trim().to_uppercase(),
                 remainder,
                 created_at,
                 updated_at,

@@ -1,8 +1,6 @@
-use chrono::Utc;
-
 pub mod registration{
-    use chrono::{DateTime, Utc};
-    use serde::{Serialize,Deserialize};
+    use chrono::{Local};
+    use serde::{Deserialize};
     
     #[derive(serde::Serialize,Deserialize,Debug)]
     pub struct UserRegistration{
@@ -16,7 +14,7 @@ pub mod registration{
 
     impl UserRegistration{
         pub fn new(username: String, email: String, password: String,is_registered: bool) -> Self {
-            let now  = Utc::now().to_rfc3339();
+            let now  = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
             UserRegistration {
                 username,
                 email,
@@ -26,10 +24,6 @@ pub mod registration{
                 updated_at:now,
             }
         }
-
-        // pub fn is_registered(&self) -> bool{
-        //     self.is_registered
-        // }
     }
 }
 
